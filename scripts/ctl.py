@@ -40,7 +40,7 @@ def print_colab_help() -> None:
     print("Start the GPU worker in Colab (this laptop cannot train):")
     print("  1. Browser: colab.research.google.com")
     print("  2. File -> Open notebook -> Google Drive")
-    print("  3. gated_lora/workplace/colab_worker.ipynb")
+    print("  3. classify_and_reasoning_qwen3-vlm8b/workplace/colab_worker.ipynb")
     print("  4. Runtime -> Change runtime type -> GPU -> A100")
     print("  5. Run all cells and leave the last cell running")
     print("Then this terminal will start printing step/loss/log lines.")
@@ -51,11 +51,11 @@ def cmd_list(_: argparse.Namespace) -> int:
     if not jobs:
         print("No jobs.")
         return 0
-    print(f"{'ID':12}  {'TYPE':5}  {'STATUS':10}  MESSAGE")
+    print(f"{'ID':12}  {'TYPE':12}  {'STATUS':10}  MESSAGE")
     for job in jobs:
         progress = read_progress(job["id"]) or {}
         message = progress.get("message") or job.get("message") or ""
-        print(f"{job['id']:12}  {job['type']:5}  {job['status']:10}  {message}")
+        print(f"{job['id']:12}  {job['type']:12}  {job['status']:10}  {message}")
     return 0
 
 
@@ -188,17 +188,35 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("status", help="Show whether the Colab worker is online")
     sub.add_parser("list", help="List jobs")
 
-    train = sub.add_parser("train", help="Queue a standard QLoRA train job")
+    train = sub.add_parser("train", help="Queue a QLoRA train job")
     train.add_argument("--no-watch", action="store_true")
 
-    ev = sub.add_parser("eval", help="Queue a standard QLoRA eval job")
+    ev = sub.add_parser("eval", help="Queue a QLoRA eval job")
     ev.add_argument("--no-watch", action="store_true")
 
-    gated_train = sub.add_parser("gated-train", help="Queue a gated-LoRA train job")
-    gated_train.add_argument("--no-watch", action="store_true")
+    train_heads = sub.add_parser(
+        "train-heads",
+        help="Queue QLoRA + binary/category head training",
+    )
+    train_heads.add_argument("--no-watch", action="store_true")
 
-    gated_eval = sub.add_parser("gated-eval", help="Queue a gated-LoRA eval job")
-    gated_eval.add_argument("--no-watch", action="store_true")
+    eval_heads = sub.add_parser(
+        "eval-heads",
+        help="Queue generation + binary/category head eval",
+    )
+    eval_heads.add_argument("--no-watch", action="store_true")
+
+    train_grpo = sub.add_parser(
+        "train-grpo",
+        help="Queue Stage 2 GRPO from the SFT adapter",
+    )
+    train_grpo.add_argument("--no-watch", action="store_true")
+
+    eval_grpo = sub.add_parser(
+        "eval-grpo",
+        help="Queue SFT vs GRPO eval",
+    )
+    eval_grpo.add_argument("--no-watch", action="store_true")
 
     watch = sub.add_parser("watch", help="Watch the latest or a given job")
     watch.add_argument("job_id", nargs="?")
@@ -218,7 +236,14 @@ def main() -> int:
         return cmd_status(args)
     if args.command == "list":
         return cmd_list(args)
-    if args.command in {"train", "eval", "gated-train", "gated-eval"}:
+    if args.command in {
+        "train",
+        "eval",
+        "train-heads",
+        "eval-heads",
+        "train-grpo",
+        "eval-grpo",
+    }:
         return cmd_submit(args)
     if args.command == "watch":
         return cmd_watch(args)

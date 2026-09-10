@@ -13,7 +13,7 @@ from typing import Any
 
 _WRITE_LOCK = threading.Lock()
 
-COLAB_ROOT = Path("/content/drive/MyDrive/gated_lora")
+COLAB_ROOT = Path("/content/drive/MyDrive/classify_and_reasoning_qwen3-vlm8b")
 
 
 def utc_now() -> str:
@@ -90,7 +90,14 @@ def read_json(path: Path) -> dict[str, Any]:
 def new_job(job_type: str, params: dict[str, Any] | None = None, root: Path | None = None) -> dict[str, Any]:
     root = root or repo_root()
     cfg = load_config(root)
-    if job_type not in ("train", "eval", "gated_train", "gated_eval"):
+    if job_type not in (
+        "train",
+        "eval",
+        "train_heads",
+        "eval_heads",
+        "train_grpo",
+        "eval_grpo",
+    ):
         raise ValueError(f"Unsupported job type: {job_type}")
 
     merged = dict(cfg["defaults"][job_type])

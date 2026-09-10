@@ -10,7 +10,7 @@ from src.jobs import repo_root, utc_now, write_json, read_json
 
 
 def current_job_id() -> str | None:
-    return os.environ.get("GATED_LORA_JOB_ID") or None
+    return os.environ.get("WORKER_JOB_ID") or None
 
 
 def progress_dir(root: Path | None = None) -> Path:

@@ -1,8 +1,18 @@
-# Weights and datasets — keep these on Drive/Colab, not GitHub
+# Weights and large local artifacts — keep these off GitHub
 models/
-data/
 checkpoints/
 results/
+workspace/cache/
+
+# Dataset dumps except the published synthetic mock split
+data/*
+!data/README.md
+!data/manifests/
+!data/manifests/mock_train.jsonl
+!data/manifests/mock_eval.jsonl
+!data/esnli_ve/
+!data/esnli_ve/images/
+!data/esnli_ve/images/*.jpg
 
 # Runtime job queue (Drive worker)
 workspace/jobs/

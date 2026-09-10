@@ -54,6 +54,18 @@ def prepare_local_model(cfg: dict) -> None:
     print("Local model ready:", local_model)
 
 
+def _cli_categories(value) -> str:
+    if isinstance(value, (list, tuple)):
+        return ",".join(str(item) for item in value)
+    return str(value)
+
+
+def _maybe(cmd: list[str], params: dict, key: str, flag: str | None = None) -> None:
+    if params.get(key) is None:
+        return
+    cmd.extend([flag or f"--{key}", str(params[key])])
+
+
 def build_command(job: dict, root: Path) -> list[str]:
     params = job["params"]
     if job["type"] == "train":
@@ -75,28 +87,6 @@ def build_command(job: dict, root: Path) -> list[str]:
         ]
         return cmd
 
-    if job["type"] == "gated_train":
-        script = root / "scripts" / "train_gated_lora.py"
-        cmd = [
-            sys.executable,
-            str(script),
-            "--model_name", str(params["model_name"]),
-            "--train_manifest", str(params["train_manifest"]),
-            "--eval_manifest", str(params["eval_manifest"]),
-            "--output_dir", str(params["output_dir"]),
-            "--data_root", str(params["data_root"]),
-            "--lora_rank", str(params.get("lora_rank", 8)),
-            "--batch_size", str(params.get("batch_size", 8)),
-            "--grad_accum", str(params.get("grad_accum", 4)),
-            "--epochs", str(params.get("epochs", 1)),
-            "--learning_rate", str(params.get("learning_rate", 2e-4)),
-            "--gate_init", str(params.get("gate_init", 2.0)),
-            "--save_steps", str(params.get("save_steps", 200)),
-        ]
-        if params.get("lora_alpha") is not None:
-            cmd.extend(["--lora_alpha", str(params["lora_alpha"])])
-        return cmd
-
     if job["type"] == "eval":
         script = root / "scripts" / "eval_qlora.py"
         cmd = [
@@ -111,12 +101,52 @@ def build_command(job: dict, root: Path) -> list[str]:
         ]
         if params.get("max_samples") is not None:
             cmd.extend(["--max_samples", str(params["max_samples"])])
-        if params.get("adapter_type"):
-            cmd.extend(["--adapter_type", str(params["adapter_type"])])
         return cmd
 
-    if job["type"] == "gated_eval":
-        script = root / "scripts" / "eval_qlora.py"
+    if job["type"] == "train_heads":
+        script = root / "scripts" / "train_heads.py"
+        cmd = [
+            sys.executable,
+            str(script),
+            "--model_name", str(params["model_name"]),
+            "--train_manifest", str(params["train_manifest"]),
+            "--eval_manifest", str(params["eval_manifest"]),
+            "--output_dir", str(params["output_dir"]),
+            "--data_root", str(params["data_root"]),
+            "--lora_rank", str(params.get("lora_rank", 8)),
+            "--batch_size", str(params.get("batch_size", 8)),
+            "--grad_accum", str(params.get("grad_accum", 4)),
+            "--epochs", str(params.get("epochs", 1)),
+            "--learning_rate", str(params.get("learning_rate", 2e-4)),
+            "--save_steps", str(params.get("save_steps", 200)),
+            "--alpha", str(params.get("alpha", 1.0)),
+            "--beta", str(params.get("beta", 1.0)),
+            "--gamma", str(params.get("gamma", 1.0)),
+            "--head_dropout", str(params.get("head_dropout", 0.1)),
+        ]
+        _maybe(cmd, params, "config")
+        _maybe(cmd, params, "num_categories")
+        _maybe(cmd, params, "max_steps")
+        _maybe(cmd, params, "eval_steps")
+        _maybe(cmd, params, "logging_steps")
+        _maybe(cmd, params, "lora_alpha")
+        _maybe(cmd, params, "max_length")
+        _maybe(cmd, params, "system_prompt")
+        if params.get("categories_file"):
+            cmd.extend(["--categories_file", str(params["categories_file"])])
+        if params.get("categories"):
+            cmd.extend(["--categories", _cli_categories(params["categories"])])
+        if "category_ignore_on_negative" in params:
+            flag = (
+                "--category_ignore_on_negative"
+                if params["category_ignore_on_negative"]
+                else "--no-category_ignore_on_negative"
+            )
+            cmd.append(flag)
+        return cmd
+
+    if job["type"] == "eval_heads":
+        script = root / "scripts" / "eval_heads.py"
         cmd = [
             sys.executable,
             str(script),
@@ -125,11 +155,93 @@ def build_command(job: dict, root: Path) -> list[str]:
             "--eval_manifest", str(params["eval_manifest"]),
             "--output_file", str(params["output_file"]),
             "--data_root", str(params["data_root"]),
-            "--adapter_type", "gated",
             "--max_new_tokens", str(params.get("max_new_tokens", 32)),
         ]
+        _maybe(cmd, params, "config")
+        _maybe(cmd, params, "num_categories")
+        _maybe(cmd, params, "system_prompt")
         if params.get("max_samples") is not None:
             cmd.extend(["--max_samples", str(params["max_samples"])])
+        if params.get("heads_path"):
+            cmd.extend(["--heads_path", str(params["heads_path"])])
+        if params.get("categories_file"):
+            cmd.extend(["--categories_file", str(params["categories_file"])])
+        if params.get("categories"):
+            cmd.extend(["--categories", _cli_categories(params["categories"])])
+        if "category_ignore_on_negative" in params:
+            flag = (
+                "--category_ignore_on_negative"
+                if params["category_ignore_on_negative"]
+                else "--no-category_ignore_on_negative"
+            )
+            cmd.append(flag)
+        if params.get("sft_adapter"):
+            cmd.extend(["--sft_adapter", str(params["sft_adapter"])])
+        if params.get("sft_output_file"):
+            cmd.extend(["--sft_output_file", str(params["sft_output_file"])])
+        if params.get("sft_heads_path"):
+            cmd.extend(["--sft_heads_path", str(params["sft_heads_path"])])
+        return cmd
+
+    if job["type"] == "train_grpo":
+        script = root / "scripts" / "train_grpo.py"
+        cmd = [sys.executable, str(script)]
+        _maybe(cmd, params, "config")
+        _maybe(cmd, params, "model_name")
+        _maybe(cmd, params, "sft_adapter")
+        _maybe(cmd, params, "sft_heads_path")
+        _maybe(cmd, params, "train_manifest")
+        _maybe(cmd, params, "eval_manifest")
+        _maybe(cmd, params, "output_dir")
+        _maybe(cmd, params, "data_root")
+        _maybe(cmd, params, "system_prompt")
+        _maybe(cmd, params, "category_keywords")
+        _maybe(cmd, params, "num_categories")
+        _maybe(cmd, params, "group_size")
+        _maybe(cmd, params, "max_new_tokens")
+        _maybe(cmd, params, "temperature")
+        _maybe(cmd, params, "kl_beta")
+        _maybe(cmd, params, "learning_rate")
+        _maybe(cmd, params, "head_learning_rate")
+        _maybe(cmd, params, "batch_size")
+        _maybe(cmd, params, "grad_accum")
+        _maybe(cmd, params, "max_steps")
+        _maybe(cmd, params, "logging_steps")
+        _maybe(cmd, params, "save_steps")
+        if params.get("categories"):
+            cmd.extend(["--categories", _cli_categories(params["categories"])])
+        if "category_ignore_on_negative" in params:
+            flag = (
+                "--category_ignore_on_negative"
+                if params["category_ignore_on_negative"]
+                else "--no-category_ignore_on_negative"
+            )
+            cmd.append(flag)
+        return cmd
+
+    if job["type"] == "eval_grpo":
+        script = root / "scripts" / "eval_heads.py"
+        cmd = [
+            sys.executable,
+            str(script),
+            "--config", str(params.get("config", root / "workspace" / "eval_grpo.json")),
+        ]
+        _maybe(cmd, params, "model_name")
+        _maybe(cmd, params, "sft_adapter")
+        _maybe(cmd, params, "sft_output_file")
+        _maybe(cmd, params, "sft_heads_path")
+        _maybe(cmd, params, "lora_path")
+        _maybe(cmd, params, "eval_manifest")
+        _maybe(cmd, params, "output_file")
+        _maybe(cmd, params, "data_root")
+        _maybe(cmd, params, "system_prompt")
+        _maybe(cmd, params, "max_new_tokens")
+        if params.get("max_samples") is not None:
+            cmd.extend(["--max_samples", str(params["max_samples"])])
+        if params.get("heads_path"):
+            cmd.extend(["--heads_path", str(params["heads_path"])])
+        if params.get("categories"):
+            cmd.extend(["--categories", _cli_categories(params["categories"])])
         return cmd
 
     raise ValueError(f"Unknown job type: {job['type']}")
@@ -178,7 +290,7 @@ def run_job(job: dict, root: Path) -> None:
 
     env = os.environ.copy()
     env["PYTHONUNBUFFERED"] = "1"
-    env["GATED_LORA_JOB_ID"] = job_id
+    env["WORKER_JOB_ID"] = job_id
 
     proc = subprocess.Popen(
         cmd,

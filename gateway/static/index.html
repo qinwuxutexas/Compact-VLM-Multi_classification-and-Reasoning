@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>gated_lora workplace</title>
+  <title>classify_and_reasoning workplace</title>
   <style>
     :root {
       --bg: #111214;
@@ -122,14 +122,14 @@
 </head>
 <body>
   <header>
-    <h1>gated_lora gateway</h1>
+    <h1>classify_and_reasoning gateway</h1>
     <div class="sub">This page cannot train. It only shows jobs after Colab A100 is running.</div>
     <div id="offline-alert" class="alert">
       <strong>Workplace offline — you will see no progress.</strong>
       The three queued jobs are waiting. Open
       <a href="https://colab.research.google.com/" target="_blank" rel="noreferrer">Google Colab</a>,
       then File → Open notebook → Google Drive →
-      <code>gated_lora/workplace/colab_worker.ipynb</code>.
+      <code>classify_and_reasoning_qwen3-vlm8b/workplace/colab_worker.ipynb</code>.
       Runtime → Change runtime type → GPU → A100. Run all cells and leave the last cell running.
       This banner turns off when the worker heartbeat arrives.
     </div>

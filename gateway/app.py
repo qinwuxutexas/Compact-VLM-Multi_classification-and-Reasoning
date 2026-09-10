@@ -26,11 +26,11 @@ from src.progress import read_progress  # noqa: E402
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
 
-app = FastAPI(title="gated_lora gateway", version="0.1.0")
+app = FastAPI(title="classify_and_reasoning gateway", version="0.1.0")
 
 
 class JobCreate(BaseModel):
-    type: str = Field(pattern="^(train|eval)$")
+    type: str = Field(pattern="^(train|eval|train_heads|eval_heads|train_grpo|eval_grpo)$")
     params: dict = Field(default_factory=dict)
 
 

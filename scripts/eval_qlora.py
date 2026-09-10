@@ -27,11 +27,6 @@ from src.data_utils import (
     open_rgb_image,
     question_from_record,
 )
-from src.gated_lora import (
-    inject_gated_lora,
-    load_gated_adapter,
-    move_adapters_to_dtype,
-)
 from src.metrics import METRIC_NAMES, score_prediction
 from src.profiler import InferenceTimer, write_json
 from src.progress import report
@@ -50,13 +45,6 @@ def parse_args():
         "--lora_path",
         type=str,
         required=True,
-    )
-
-    parser.add_argument(
-        "--adapter_type",
-        type=str,
-        default="peft",
-        choices=("peft", "gated"),
     )
 
     parser.add_argument(
@@ -98,7 +86,7 @@ def default_data_root():
     return str(ROOT / "data")
 
 
-def load_model_and_processor(model_name, lora_path, adapter_type="peft"):
+def load_model_and_processor(model_name, lora_path):
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
         bnb_4bit_quant_type="nf4",
@@ -114,24 +102,10 @@ def load_model_and_processor(model_name, lora_path, adapter_type="peft"):
         torch_dtype=torch.bfloat16,
         device_map="auto",
     )
-
-    if adapter_type == "gated":
-        cfg_path = Path(lora_path) / "gated_config.json"
-        cfg = json.loads(cfg_path.read_text(encoding="utf-8")) if cfg_path.exists() else {}
-        inject_gated_lora(
-            model,
-            rank=cfg.get("rank", 8),
-            alpha=cfg.get("alpha", 16),
-            dropout=cfg.get("dropout", 0.05),
-            gate_init=cfg.get("gate_init", 2.0),
-        )
-        move_adapters_to_dtype(model, torch.bfloat16)
-        load_gated_adapter(model, lora_path)
-    else:
-        model = PeftModel.from_pretrained(model, lora_path)
+    model = PeftModel.from_pretrained(model, lora_path)
 
     model.eval()
-    print(f"Loaded {adapter_type} adapter from:")
+    print("Loaded PEFT adapter from:")
     print(lora_path)
     return model, processor
 
@@ -209,7 +183,6 @@ def main():
     model, processor = load_model_and_processor(
         args.model_name,
         args.lora_path,
-        adapter_type=args.adapter_type,
     )
     report(phase="data", message="loading eval manifest")
     records = load_records(args.eval_manifest, args.max_samples)
@@ -225,7 +198,7 @@ def main():
     dataset_scores = defaultdict(float)
     dataset_counts = defaultdict(int)
     results = []
-    timer = InferenceTimer(method=args.adapter_type)
+    timer = InferenceTimer(method="qlora")
 
     with torch.inference_mode():
         for r in tqdm(records):
@@ -319,7 +292,7 @@ def main():
     write_json(
         efficiency_path,
         timer.summary({
-            "adapter_type": args.adapter_type,
+            "adapter_type": "peft",
             "scores": scores,
             "counts": dict(dataset_counts),
         }),
