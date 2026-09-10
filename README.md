@@ -10,6 +10,8 @@ This project is ordinary QLoRA on [Qwen3-VL-8B-Instruct](https://huggingface.co/
 
 The mock task is e-SNLI-VE (1000 train / 100 eval). The same setup is for later use such as “is there a finding?” and, if yes, which finding, with a written explanation.
 
+**License:** [PolyForm Noncommercial 1.0.0](LICENSE) — you may use, change, and redistribute this software for noncommercial purposes. Commercial use is not permitted.
+
 ---
 
 ## 1. Model architecture
@@ -214,3 +216,13 @@ Findings-style (binary first, categories only if positive):
 ### Do not commit
 
 `models/`, `checkpoints/`, `results/`, job logs, Flickr downloads, adapter weights. The mock jsonl and synthetic JPEGs are the exception.
+
+---
+
+## License
+
+Copyright 2026 qinwuxutexas.
+
+This software is licensed under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). You may use, modify, and redistribute it for **noncommercial** purposes (including research, personal study, and use by educational or other noncommercial organizations). **Commercial use is not permitted.**
+
+See [LICENSE](LICENSE) for the full terms. Required Notice: Copyright 2026 qinwuxutexas (https://github.com/qinwuxutexas).
