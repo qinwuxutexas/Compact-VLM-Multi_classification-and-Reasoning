@@ -221,8 +221,8 @@ Findings-style (binary first, categories only if positive):
 
 ## License
 
-Copyright 2026 qinwuxutexas.
+Copyright 20wuxutexas.
 
 This software is licensed under the [PolyForm Noncommercial License 1.0.0](https://polyformproject.org/licenses/noncommercial/1.0.0). You may use, modify, and redistribute it for **noncommercial** purposes (including research, personal study, and use by educational or other noncommercial organizations). **Commercial use is not permitted.**
 
-See [LICENSE](LICENSE) for the full terms. Required Notice: Copyright 2026 qinwuxutexas (https://github.com/qinwuxutexas).
+See [LICENSE](LICENSE) for the full terms. Required Notice: Copyright 2026.
