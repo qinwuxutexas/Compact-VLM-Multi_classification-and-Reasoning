@@ -1,6 +1,6 @@
-# Classify and Reason with Qwen3-VL-8B
+# Classify and Reason with Compacted VLM Model
 
-This project is ordinary QLoRA on [Qwen3-VL-8B-Instruct](https://huggingface.co/Qwen/Qwen3-VL-8B-Instruct) plus two classification heads and a language rationale:
+This project is to develop a compacted VLM using the Qwen-3-VL-8B as the baseline, and redesigned the architecture with classification heads and a language rationale:
 
 1. **Binary classification** — `no` / `yes`
 2. **Categories under the positive class** — if yes, pick one of K classes from the config
