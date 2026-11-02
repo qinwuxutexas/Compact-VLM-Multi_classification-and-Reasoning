@@ -14,13 +14,13 @@ The mock task is e-SNLI-VE (1000 train / 100 eval). The same setup is for later 
 
 ## 1. Model architecture
 
-Qwen3-VL-8B is loaded in 4-bit. LoRA is applied to the usual projection layers. Two linear heads sit on the **same** last-prompt hidden state. The LM head is used only for the rationale tokens.
+Qwen3-VL-8B is the baseline, customized model architecture including multi-label classification and rational for multi-tasks. Trained with 4-bit QLoRA . Two linear heads sit on the **same** last-prompt hidden state. The LLM decoder head is used only for the rationale tokens.
 
 ```text
   system instruction + image + user question
                     │
                     ▼
-         Qwen3-VL-8B-Instruct (4-bit QLoRA)
+         Customized Qwen3-VL-8B-Instruct  (4-bit QLoRA)
                     │
          last prompt hidden state
            ┌────────┼────────┐
